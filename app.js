@@ -950,12 +950,32 @@
     toast(`Estilo aplicado: ${btn.textContent.trim()} ✨`);
   });
 
+  function armarEnlaceVentas() {
+    const personalizado = (CFG.whatsappVentas || AJ('whatsapp_ventas') || '').trim();
+    if (personalizado.startsWith('http://') || personalizado.startsWith('https://')) {
+      return personalizado;
+    }
+    let tel = personalizado.replace(/\D/g, '');
+    if (!tel) {
+      // Número comercial oficial ofuscado en Base64 para protegerlo de scrapers en el repo público
+      try {
+        tel = atob('NTI1NTY3ODAxMzE1');
+      } catch (_) {
+        tel = '525567801315';
+      }
+    }
+    const num = tel.length === 10 ? '52' + tel : tel;
+    const msg = '¡Hola! 👋 Vi el menú demo de Cocina La Tradición y me gustaría información para crear uno para mi negocio de comida.';
+    return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  }
+
   function actualizarEnlaceVentas() {
     const link = $('#link-crear-menu');
     if (!link) return;
-    const tel = (CFG.whatsappVentas || AJ('whatsapp_ventas', 'whatsapp') || NUMERO_RESPALDO).replace(/\D/g, '');
-    const num = tel.length === 10 ? '52' + tel : tel;
-    link.href = `https://wa.me/${num}?text=${encodeURIComponent('¡Hola! 👋 Vi el menú demo de Cocina La Tradición y me gustaría información para crear uno para mi negocio de comida.')}`;
+    link.href = armarEnlaceVentas();
+    link.addEventListener('click', () => {
+      link.href = armarEnlaceVentas();
+    });
   }
 
   // ---------- arranque ----------
