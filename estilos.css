@@ -1,5 +1,6 @@
-/* ========== Desayunos El Payo · estilos ========== */
+/* ========== Menú Digital · estilos ========== */
 :root {
+  --hero-bg: #17130f;
   --ink: #17130f;
   --ink-2: #2a231c;
   --cream: #fff6e8;
@@ -23,6 +24,7 @@
 /* TEMA DARK (Fast Food / Burgers / Nocturno) */
 :root[data-tema="dark"],
 body[data-tema="dark"] {
+  --hero-bg: #0d0d10;
   --ink: #f5f5f7;
   --ink-2: #e1e1e6;
   --cream: #121215;
@@ -40,6 +42,7 @@ body[data-tema="dark"] {
 /* TEMA CAFÉ & BRUNCH (Cafetería / Repostería / Desayunos) */
 :root[data-tema="cafe"],
 body[data-tema="cafe"] {
+  --hero-bg: #221a15;
   --ink: #2b221d;
   --ink-2: #3a2e27;
   --cream: #fbf7f0;
@@ -57,6 +60,7 @@ body[data-tema="cafe"] {
 /* TEMA MARINO / FRESCO (Mariscos / Bebidas / Helados) */
 :root[data-tema="marino"],
 body[data-tema="marino"] {
+  --hero-bg: #071725;
   --ink: #0d2238;
   --ink-2: #163657;
   --cream: #f2f6fa;
@@ -71,39 +75,152 @@ body[data-tema="marino"] {
   --shadow: 0 10px 30px -12px rgba(13,34,56,.2);
 }
 
-/* Adaptaciones oscuras */
+/* Reglas específicas para Dark Food */
+[data-tema="dark"] .hero {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,214,10,.1), transparent 40%),
+    radial-gradient(rgba(255,255,255,.07) 1.2px, transparent 1.4px) 0 0 / 14px 14px,
+    #0d0d10;
+  color: #fff;
+}
+[data-tema="dark"] .hero-title {
+  color: #ff3b30;
+  -webkit-text-stroke: 2px #fff;
+  text-shadow: 4px 4px 0 #fff, 7px 7px 0 rgba(0,0,0,.9);
+}
+[data-tema="dark"] .cat-chip {
+  background: #1c1c21;
+  color: #f5f5f7;
+  border: 2px solid #32323a;
+}
+[data-tema="dark"] .cat-chip.is-on {
+  background: var(--yellow);
+  color: #121215;
+  border-color: var(--yellow);
+  font-weight: 800;
+}
+[data-tema="dark"] .dish {
+  background: #1c1c21;
+  border-color: #2e2e36;
+  box-shadow: 4px 4px 0 #000;
+  color: #f5f5f7;
+}
+[data-tema="dark"] .dish:active {
+  box-shadow: 2px 2px 0 #000;
+}
+[data-tema="dark"] .dish-name,
+[data-tema="dark"] .fav-name,
+[data-tema="dark"] .op-score,
+[data-tema="dark"] .footer-brand,
+[data-tema="dark"] .pl-head h2,
+[data-tema="dark"] .grupo-head h3,
+[data-tema="dark"] .car-info strong,
+[data-tema="dark"] .car-total {
+  color: #ffffff;
+}
+[data-tema="dark"] .dish-desc,
+[data-tema="dark"] .cat-count,
+[data-tema="dark"] .block-sub,
+[data-tema="dark"] .op-fecha,
+[data-tema="dark"] .car-info small,
+[data-tema="dark"] .footer,
+[data-tema="dark"] .footer-links a {
+  color: #9c9ca4;
+}
 [data-tema="dark"] .opiniones {
-  color: #17130f;
+  background: #18181d;
+  color: #f5f5f7;
+  border-color: var(--yellow);
+  box-shadow: 5px 5px 0 #000;
 }
 [data-tema="dark"] .opiniones .op-stars {
-  color: #b8141c;
+  color: var(--yellow);
+}
+[data-tema="dark"] .opiniones .op-bar i {
+  background: rgba(255,255,255,.15);
+}
+[data-tema="dark"] .opiniones .op-bar i b {
+  background: var(--yellow);
+}
+[data-tema="dark"] .op-card,
+[data-tema="dark"] .op-form,
+[data-tema="dark"] .op-vacio {
+  background: #222228;
+  border-color: #32323a;
+  box-shadow: 4px 4px 0 #000;
+  color: #f5f5f7;
+}
+[data-tema="dark"] .op-form h3 {
+  color: #ffffff;
 }
 [data-tema="dark"] .field input,
 [data-tema="dark"] .field textarea,
 [data-tema="dark"] .search-box input {
-  background: var(--paper);
-  color: var(--ink);
-  border-color: var(--line);
+  background: #24242a;
+  color: #ffffff;
+  border-color: #363640;
 }
 [data-tema="dark"] .chip {
-  background: var(--paper);
-  color: var(--ink);
-  border-color: var(--line);
+  background: #24242a;
+  color: #f5f5f7;
+  border-color: #363640;
 }
 [data-tema="dark"] .chip.is-on {
   background: var(--yellow);
   color: #121215;
   border-color: var(--yellow);
+  font-weight: 800;
 }
 [data-tema="dark"] .car-item {
   background: #24242a;
 }
 [data-tema="dark"] .qty {
-  border-color: var(--line);
+  border-color: #363640;
+  color: #ffffff;
 }
 [data-tema="dark"] .cats-search {
   background: var(--yellow);
   color: #121215;
+}
+[data-tema="dark"] .footer-promo {
+  background: #1c1c21;
+  border-color: #32323a;
+  box-shadow: 6px 6px 0 #000;
+}
+[data-tema="dark"] .footer-promo .promo-title {
+  color: #ffffff;
+}
+[data-tema="dark"] .footer-promo .promo-badge {
+  background: var(--yellow);
+  color: #121215;
+}
+[data-tema="dark"] .cartbar-cart {
+  background: var(--yellow);
+  color: #121215;
+}
+[data-tema="dark"] .cartbar-count {
+  background: #121215;
+  color: var(--yellow);
+}
+[data-tema="dark"] .sheet {
+  background: #1c1c21;
+  color: #f5f5f7;
+}
+[data-tema="dark"] .sheet-foot {
+  background: #1c1c21;
+  border-top-color: #2e2e36;
+}
+[data-tema="dark"] .sheet-close {
+  background: #2a2a32;
+  color: #ffffff;
+}
+[data-tema="dark"] .info-card {
+  background: #1c1c21;
+  border-color: #2e2e36;
+  color: #f5f5f7;
+}
+[data-tema="dark"] .info-card p {
+  color: #ffffff;
 }
 
 * { box-sizing: border-box; }
@@ -153,7 +270,7 @@ a { color: inherit; }
   background:
     radial-gradient(circle at 20% 20%, rgba(255,200,61,.12), transparent 40%),
     radial-gradient(rgba(255,255,255,.07) 1.2px, transparent 1.4px) 0 0 / 14px 14px,
-    var(--ink);
+    var(--hero-bg, #17130f);
   color: #fff;
   padding: 34px 20px 40px;
   overflow: hidden;
@@ -186,7 +303,7 @@ a { color: inherit; }
 .polaroid img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; }
 .polaroid span {
   position: absolute; bottom: 6px; left: 0; right: 0; text-align: center;
-  font-weight: 700; color: var(--ink); font-size: .85rem;
+  font-weight: 700; color: #17130f; font-size: .85rem;
 }
 .polaroid::before { /* cinta */
   content: ""; position: absolute; top: -10px; left: 50%; width: 70px; height: 22px;
@@ -208,12 +325,21 @@ a { color: inherit; }
 }
 
 /* ---------- cinta de nombres ---------- */
-/* el contenedor recorta la cinta inclinada para que nunca ensanche la página */
-.marquee-wrap { overflow: hidden; margin: -26px 0 -12px; padding: 12px 0; position: relative; z-index: 3; pointer-events: none; }
+.marquee-wrap {
+  overflow: hidden;
+  margin: -18px 0 -8px;
+  padding: 24px 0;
+  position: relative;
+  z-index: 4;
+  pointer-events: none;
+}
 .marquee {
-  background: var(--yellow); color: var(--ink); overflow: hidden;
-  transform: rotate(-1.6deg); margin: 0 -10px;
-  border-block: 3px solid var(--ink);
+  background: var(--yellow);
+  color: #17130f;
+  overflow: hidden;
+  transform: rotate(-1.6deg);
+  margin: 0 -40px;
+  border-block: 3px solid #17130f;
 }
 .marquee-track {
   display: flex; width: max-content; gap: 0; padding: 9px 0;
@@ -224,19 +350,20 @@ a { color: inherit; }
 .marquee-track span::after { content: "✦"; margin-left: 28px; color: var(--red); }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
-/* ---------- selector de temas demo ---------- */
+/* ---------- selector de temas demo (arriba del sitio) ---------- */
 .theme-bar {
-  background: var(--paper);
-  border-bottom: 2px solid var(--line);
-  padding: 10px 16px;
+  background: #0e0e12;
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  padding: 9px 16px;
   position: relative;
-  z-index: 15;
+  z-index: 35;
 }
 .theme-bar-inner {
   max-width: 1100px;
   margin: 0 auto;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -244,11 +371,11 @@ a { color: inherit; }
 .theme-bar-inner::-webkit-scrollbar { display: none; }
 .theme-bar-label {
   font-weight: 800;
-  font-size: .85rem;
-  color: var(--muted);
+  font-size: .82rem;
+  color: #cfc6b8;
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .05em;
 }
 .theme-chips {
   display: flex;
@@ -257,23 +384,25 @@ a { color: inherit; }
 .theme-chip {
   flex: none;
   font-weight: 700;
-  font-size: .85rem;
-  padding: 6px 14px;
+  font-size: .82rem;
+  padding: 5px 13px;
   border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: var(--cream);
-  color: var(--ink);
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: #f5f5f7;
   cursor: pointer;
   transition: all .15s ease;
 }
 .theme-chip:hover {
-  border-color: var(--ink);
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.4);
 }
 .theme-chip.is-on {
-  background: var(--ink);
-  color: var(--cream);
-  border-color: var(--ink);
-  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  background: var(--yellow);
+  color: #17130f;
+  border-color: var(--yellow);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
 }
 
 /* ---------- aviso ---------- */
