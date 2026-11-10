@@ -197,12 +197,14 @@
   }
 
   function tarjeta(p, grande) {
+    const esCombo = /combo|paquete|promo/i.test(p.cat.nombre) || /combo|paquete/i.test(p.nombre);
     return `
-      <button type="button" class="dish reveal ${grande ? 'dish-big' : ''} ${p.agotado ? 'agotado' : ''}" data-id="${p.id}" style="--accent:${p.cat.color}"
+      <button type="button" class="dish reveal ${grande ? 'dish-big' : ''} ${esCombo ? 'dish-combo' : ''} ${p.agotado ? 'agotado' : ''}" data-id="${p.id}" style="--accent:${p.cat.color}"
         data-buscar="${esc(norm([p.nombre, p.descripcion, p.cat.nombre, ...p.grupos.flatMap((g) => g.opciones.map((o) => o.nombre))].join(' ')))}">
         <div class="dish-photo">
           ${fotoO(p, 0, grande ? 'ph-lg' : '')}
           ${p.fotos.length > 1 ? `<span class="photo-count">📷 ${p.fotos.length}</span>` : ''}
+          ${esCombo ? '<span class="badge-combo">🎁 Combo</span>' : ''}
           ${p.agotado ? '<span class="badge-agotado">Hoy no hay</span>' : ''}
         </div>
         <div class="dish-body">
@@ -655,26 +657,51 @@
   $('#cartbar-cart').addEventListener('click', () => { pintarCarrito(); abrir($('#sheet-carrito')); });
 
   function mensajePedido() {
-    const L = [`¡Hola! 👋 Quiero hacer un pedido en *${nombreNegocio().replace(/"/g, '')}*:`, ''];
-    carrito.forEach((x) => {
-      L.push(`*${x.qty}× ${x.nombre}*${x.unidad != null ? ' — ' + money(x.unidad * x.qty) : ''}`);
-      x.detalle.forEach((d) => L.push(`   • ${d.t}: ${d.v}`));
-      if (x.nota) L.push(`   📝 ${x.nota}`);
-    });
-    L.push('');
-    const t = totalCarrito();
-    L.push(t != null && t > 0 ? `💰 *Total: ${money(t)}*` : '💰 ¿Me confirmas el total, porfa?');
-    const nombre = $('#car-nombre').value.trim();
-    if (nombre) L.push(`👤 A nombre de: ${nombre}`);
-    if (hayEntregas() && valorChip('#car-entrega') === 'llevar') {
+    const negocio = nombreNegocio().replace(/"/g, '');
+    const L = [
+      `🧾 *NUEVO PEDIDO* — *${negocio}*`,
+      `══════════════════════════`
+    ];
+
+    const entrega = valorChip('#car-entrega');
+    if (hayEntregas() && entrega === 'llevar') {
       const dir = $('#car-dir').value.trim();
-      L.push(`🛵 Me lo llevas${dir ? ' a: ' + dir : ''}`);
-    } else L.push('🏃 Paso a recogerlo');
+      L.push(`🛵 *Entrega:* A domicilio`);
+      if (dir) L.push(`📍 *Dirección:* ${dir}`);
+    } else {
+      L.push(`🏃 *Entrega:* Paso a recoger`);
+    }
+
+    const nombre = $('#car-nombre').value.trim();
+    if (nombre) L.push(`👤 *Cliente:* ${nombre}`);
+
     const hora = $('#car-hora-input').value;
-    L.push(valorChip('#car-hora') === 'hora' && hora ? `🕘 Para las ${hora}` : '🕘 Lo antes posible');
+    L.push(valorChip('#car-hora') === 'hora' && hora ? `🕘 *Para las:* ${hora}` : `⚡ *Horario:* Lo antes posible`);
+    L.push(`══════════════════════════`);
+    L.push(`📋 *DETALLE DEL PEDIDO:*`);
+    L.push(``);
+
+    carrito.forEach((x, idx) => {
+      const subtotal = x.unidad != null ? ' — ' + money(x.unidad * x.qty) : '';
+      L.push(`▪️ *${x.qty}× ${x.nombre}*${subtotal}`);
+      x.detalle.forEach((d) => L.push(`   ▫️ ${d.t}: ${d.v}`));
+      if (x.nota) L.push(`   📝 _Nota: ${x.nota}_`);
+      if (idx < carrito.length - 1) L.push(``);
+    });
+
+    L.push(``);
+    L.push(`══════════════════════════`);
+    const t = totalCarrito();
+    L.push(t != null && t > 0 ? `💰 *TOTAL A PAGAR: ${money(t)}*` : `💰 *TOTAL:* Confirmar con el cliente`);
+    L.push(`══════════════════════════`);
+
     const nota = $('#car-nota').value.trim();
-    if (nota) L.push(`📝 ${nota}`);
-    L.push('', '_Pedido hecho desde el menú digital_');
+    if (nota) {
+      L.push(`📝 *Indicaciones extra:* ${nota}`);
+      L.push(`══════════════════════════`);
+    }
+
+    L.push(`_Pedido generado desde el Menú Digital_`);
     return L.join('\n');
   }
 
@@ -907,10 +934,36 @@
     }
   });
 
+  // ---------- temas visuales demo ----------
+  function aplicarTema(t) {
+    const tema = t || CFG.tema || AJ('tema') || store.get('tema', 'clasico');
+    document.documentElement.setAttribute('data-tema', tema);
+    document.body.setAttribute('data-tema', tema);
+    store.set('tema', tema);
+    $$('.theme-chip').forEach((c) => c.classList.toggle('is-on', c.dataset.setTema === tema));
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-set-tema]');
+    if (!btn) return;
+    aplicarTema(btn.dataset.setTema);
+    toast(`Estilo aplicado: ${btn.textContent.trim()} ✨`);
+  });
+
+  function actualizarEnlaceVentas() {
+    const link = $('#link-crear-menu');
+    if (!link) return;
+    const tel = (CFG.whatsappVentas || AJ('whatsapp_ventas', 'whatsapp') || NUMERO_RESPALDO).replace(/\D/g, '');
+    const num = tel.length === 10 ? '52' + tel : tel;
+    link.href = `https://wa.me/${num}?text=${encodeURIComponent('¡Hola! 👋 Vi el menú demo de Cocina La Tradición y me gustaría información para crear uno para mi negocio de comida.')}`;
+  }
+
   // ---------- arranque ----------
   function usar(datos) {
     AJ = armarAjustes(datos.ajustes || []);
     MENU = armarMenu(datos.platillos || []);
+    aplicarTema();
+    actualizarEnlaceVentas();
     pintarMenu();
   }
 

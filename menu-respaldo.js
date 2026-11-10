@@ -4,6 +4,51 @@
 window.PAYO_RESPALDO = {
  "platillos": [
   {
+   "Categoría": "Combos y paquetes",
+   "Platillo": "Combo Desayuno Completo",
+   "Descripción": "Platillo fuerte a elegir + Café de olla calientito + Vaso de jugo de naranja recién exprimido. ¡El paquete más pedido!",
+   "Precio": "135",
+   "Fotos": "chilaquiles-1.jpg, torta-1.jpg",
+   "Título opciones": "Platillo principal a elegir",
+   "Opciones": "Chilaquiles verdes con pollo, Chilaquiles rojos con huevo, Torta de pierna con queso, Club Sándwich",
+   "Cuántas puede elegir": "1",
+   "Título opciones 2": "Bebida caliente",
+   "Opciones 2": "Café de olla tradicional, Café americano, Té caliente",
+   "Extras": "Porción de fruta fresca $20, Huevo extra $15",
+   "Disponible": "SI",
+   "Destacado": "SI"
+  },
+  {
+   "Categoría": "Combos y paquetes",
+   "Platillo": "Paquete Pareja (Para 2)",
+   "Descripción": "2 Platillos fuertes + 2 bebidas a elegir + 1 orden de hot cakes esponjosos al centro para compartir. Ahorra $45.",
+   "Precio": "249",
+   "Fotos": "chilaquiles-2.jpg, hotcakes-1.jpg",
+   "Título opciones": "Elige los 2 platillos",
+   "Opciones": "Chilaquiles con pollo, Molletes con tocino, Torta de la casa, Sincronizadas dobles",
+   "Cuántas puede elegir": "2",
+   "Título opciones 2": "2 Bebidas incluidas",
+   "Opciones 2": "2 Cafés de olla, 2 Jugos de naranja, 1 Café y 1 Jugo",
+   "Extras": "Nutella en los hot cakes $15, Queso gratinado extra $18",
+   "Disponible": "SI",
+   "Destacado": "SI"
+  },
+  {
+   "Categoría": "Combos y paquetes",
+   "Platillo": "Combo Dulce Mañana",
+   "Descripción": "Hot Cakes o Pan Francés con mantequilla + Café recién colado + Copa de yogurt artesanal con fruta y granola.",
+   "Precio": "120",
+   "Fotos": "pan-frances-1.jpg, yogurt-fruta-1.jpg",
+   "Título opciones": "Elige tu dulce",
+   "Opciones": "Hot Cakes esponjosos, Pan Francés brioche",
+   "Cuántas puede elegir": "1",
+   "Título opciones 2": "Tu café",
+   "Opciones 2": "Café de olla, Café con leche, Café negro americano",
+   "Extras": "Frutos rojos $15, Miel de abeja extra $10",
+   "Disponible": "SI",
+   "Destacado": "NO"
+  },
+  {
    "Categoría": "Chilaquiles",
    "Platillo": "Chilaquiles Especiales",
    "Descripción": "Totopos crujientes bañados en salsa casera, con crema, queso fresco, cebolla morada y cilantro.",
