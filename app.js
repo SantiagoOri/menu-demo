@@ -606,7 +606,7 @@
     } else {
       ul.innerHTML = carrito.map((x) => `
         <li class="car-item" data-key="${x.key}">
-          <div class="car-thumb" style="--accent:${x.color}">${x.foto ? imgTag(x.foto, x.nombre, x.emoji) : relleno(x.emoji)}</div>
+          <div class="car-thumb" style="--accent:${x.color}">${(!sinFotosActivo() && x.foto) ? imgTag(x.foto, x.nombre, x.emoji) : relleno(x.emoji)}</div>
           <div class="car-info">
             <strong>${esc(x.nombre)}</strong>
             ${x.detalle.map((d) => `<small>${esc(d.t)}: ${esc(d.v)}</small>`).join('')}
@@ -754,7 +754,7 @@
       ruleta = elegirAlAzar();
       const { p } = ruleta;
       foto.style.setProperty('--accent', p.cat.color);
-      foto.innerHTML = p.fotos[0] ? imgTag(p.fotos[0], p.nombre, p.cat.emoji, 'eager') : relleno(p.cat.emoji, 'ph-lg');
+      foto.innerHTML = (!sinFotosActivo() && p.fotos[0]) ? imgTag(p.fotos[0], p.nombre, p.cat.emoji, 'eager') : relleno(p.cat.emoji, 'ph-lg');
       nom.textContent = p.nombre;
       if (++paso < pasos) setTimeout(tick, 50 + paso * paso * 1.6);
       else {
@@ -1062,6 +1062,7 @@
     if (btn) {
       btn.classList.toggle('is-on', sinFotos);
       btn.setAttribute('aria-pressed', String(sinFotos));
+      btn.textContent = sinFotos ? '📷 Ver con fotos' : '📄 Modo sin fotos';
     }
   }
 
@@ -1085,6 +1086,8 @@
     if (!btn) return;
     aplicarModoFotos(!sinFotosActivo());
     pintarMenu();
+    if (!$('#sheet-platillo').hidden && actual) pintarPlatillo();
+    if (!$('#sheet-carrito').hidden) pintarCarrito();
     const q = $('#buscar')?.value;
     if (q) filtrar(q);
     toast(sinFotosActivo() ? 'Modo sin fotos activado 📄' : 'Modo con fotos activado 📷');
