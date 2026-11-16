@@ -174,8 +174,6 @@
     if (!(t instanceof HTMLImageElement)) return;
     const drive = t.src.match(/drive\.google\.com\/thumbnail\?id=([\w-]+)/);
     if (drive && !t.dataset.retry) { t.dataset.retry = 1; t.src = `https://lh3.googleusercontent.com/d/${drive[1]}=w1200`; return; }
-    const g = t.closest('.g-item');
-    if (g) { g.remove(); return; }
     if (t.classList.contains('slide-bg')) { t.remove(); return; }
     const ph = document.createElement('div');
     ph.className = 'ph';
@@ -227,9 +225,14 @@
     $('#footer-nombre').textContent = conComillas(nombreNegocio());
     document.title = nombreNegocio().replace(/"/g, '') + ' · Menú';
 
-    const conFoto = platillos.filter((p) => p.fotos.length);
-    const portada = [...conFoto.filter((p) => p.destacado), ...conFoto.filter((p) => !p.destacado)].slice(0, 3);
-    $('#hero-fotos').innerHTML = portada.map((p) => `<div class="polaroid">${imgTag(p.fotos[0], p.nombre, p.cat.emoji, 'eager')}<span>${esc(p.nombre)}</span></div>`).join('');
+    // galería interactiva en portada: prioriza destacados y alterna platillos
+    const ordenados = [...platillos.filter((p) => p.destacado), ...platillos.filter((p) => !p.destacado)];
+    const fotos = [];
+    const maxF = Math.max(0, ...ordenados.map((p) => p.fotos.length));
+    for (let i = 0; i < maxF; i++) ordenados.forEach((p) => { if (p.fotos[i]) fotos.push([p, i]); });
+    GALERIA = fotos;
+    heroIndex = 0;
+    pintarHeroFotos(true);
 
     const nombres = platillos.filter((p) => !p.agotado).map((p) => `<span>${esc(p.nombre)}</span>`).join('');
     $('#marquee').innerHTML = nombres + nombres;
@@ -260,15 +263,6 @@
         </div>
         <div class="dishes">${c.platillos.map((p, i) => tarjeta(p, i === 0 && c.platillos.length > 1)).join('')}</div>
       </section>`).join('');
-
-    // galería: se alternan platillos para que no salgan seguidas las del mismo
-    const fotos = [];
-    const maxF = Math.max(0, ...platillos.map((p) => p.fotos.length));
-    for (let i = 0; i < maxF; i++) platillos.forEach((p) => { if (p.fotos[i]) fotos.push([p, i]); });
-    $('#galeria').hidden = !fotos.length;
-    $('#galeria-lista').innerHTML = fotos.map(([p, i], n) =>
-      `<button type="button" class="g-item reveal" data-foto="${n}">${imgTag(p.fotos[i], p.nombre, p.cat.emoji)}<span>${esc(p.nombre)}</span></button>`).join('');
-    GALERIA = fotos;
 
     pintarInfo();
     $('#cartbar-wa').href = waLink(`¡Hola! 👋 Vi su menú digital y quiero hacer un pedido:`);
@@ -762,8 +756,73 @@
   $('#ru-otra').addEventListener('click', girar);
   $('#ru-quiero').addEventListener('click', () => { if (ruleta) abrirPlatillo(ruleta.p, { preset: { sel: ruleta.sel }, reemplazo: true }); });
 
-  // ---------- galería / visor ----------
-  let GALERIA = [], lbLista = [], lbIndex = 0, lbDesdePlatillo = false;
+  // ---------- galería en portada / visor ----------
+  let GALERIA = [], heroIndex = 0, lbLista = [], lbIndex = 0, lbDesdePlatillo = false;
+  function polaroidHTML([p, n]) {
+    return `${imgTag(p.fotos[n], p.nombre, p.cat.emoji, 'eager')}<span>${esc(p.nombre)}</span>`;
+  }
+  function precargarHeroFoto(idx) {
+    if (GALERIA.length < 2) return;
+    const [p, n] = GALERIA[(idx + GALERIA.length) % GALERIA.length];
+    const pre = new Image();
+    pre.src = p.fotos[n];
+  }
+  function pintarHeroFotos(inicial = false) {
+    const cont = $('#hero-fotos');
+    if (!cont) return;
+    const len = GALERIA.length;
+    if (!len) {
+      cont.hidden = true;
+      cont.innerHTML = '';
+      return;
+    }
+    cont.hidden = false;
+    cont.dataset.count = String(Math.min(len, 3));
+    cont.setAttribute('aria-disabled', len < 2 ? 'true' : 'false');
+
+    let indices;
+    if (len === 1) indices = [0];
+    else if (len === 2) indices = [(heroIndex + 1) % 2, heroIndex % 2];
+    else indices = [(heroIndex + 2) % len, heroIndex % len, (heroIndex + 1) % len];
+
+    if (inicial || $$('.polaroid', cont).length !== indices.length) {
+      cont.innerHTML =
+        indices.map((idx) => `<div class="polaroid">${polaroidHTML(GALERIA[idx])}</div>`).join('') +
+        (len > 1 ? `<span class="hero-photos-badge">📸 ${(heroIndex % len) + 1} / ${len} · Toca para pasar →</span>` : '');
+    } else {
+      const cards = $$('.polaroid', cont);
+      indices.forEach((idx, pos) => {
+        cards[pos].innerHTML = polaroidHTML(GALERIA[idx]);
+      });
+      const front = cards[len === 1 ? 0 : 1];
+      if (front) {
+        front.classList.remove('is-flipping');
+        void front.offsetWidth;
+        front.classList.add('is-flipping');
+      }
+      const badge = $('.hero-photos-badge', cont);
+      if (badge) badge.textContent = `📸 ${(heroIndex % len) + 1} / ${len} · Toca para pasar →`;
+    }
+
+    precargarHeroFoto(heroIndex + 1);
+    if (len >= 3) precargarHeroFoto(heroIndex + 2);
+  }
+  function avanzarHeroFoto() {
+    if (GALERIA.length < 2) return;
+    heroIndex = (heroIndex + 1) % GALERIA.length;
+    pintarHeroFotos(false);
+  }
+  const heroFotos = $('#hero-fotos');
+  if (heroFotos) {
+    heroFotos.addEventListener('click', avanzarHeroFoto);
+    heroFotos.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        avanzarHeroFoto();
+      }
+    });
+  }
+
   function verFoto(i, listaNueva, desdePlatillo) {
     if (listaNueva) { lbLista = listaNueva; lbDesdePlatillo = !!desdePlatillo; }
     lbIndex = (i + lbLista.length) % lbLista.length;
@@ -775,12 +834,6 @@
     $('#lb-pedir').hidden = p.agotado || lbDesdePlatillo;
     $('#lb-prev').hidden = $('#lb-next').hidden = lbLista.length < 2;
   }
-  $('#galeria-lista').addEventListener('click', (e) => {
-    const b = e.target.closest('.g-item');
-    if (!b) return;
-    verFoto(+b.dataset.foto, GALERIA);
-    abrir($('#lightbox'));
-  });
   $('#lb-prev').addEventListener('click', () => verFoto(lbIndex - 1));
   $('#lb-next').addEventListener('click', () => verFoto(lbIndex + 1));
   $('#lb-pedir').addEventListener('click', () => abrirPlatillo(lbLista[lbIndex][0], { reemplazo: true }));
