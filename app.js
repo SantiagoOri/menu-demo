@@ -196,16 +196,22 @@
 
   function tarjeta(p, grande) {
     const esCombo = /combo|paquete|promo/i.test(p.cat.nombre) || /combo|paquete/i.test(p.nombre);
+    const sinF = sinFotosActivo();
+    const badgesInline = (esCombo || p.agotado)
+      ? `<div class="dish-badges">${esCombo ? '<span class="badge-combo-inline">🎁 Combo</span>' : ''}${p.agotado ? '<span class="badge-agotado-inline">Hoy no hay</span>' : ''}</div>`
+      : '';
     return `
       <button type="button" class="dish reveal ${grande ? 'dish-big' : ''} ${esCombo ? 'dish-combo' : ''} ${p.agotado ? 'agotado' : ''}" data-id="${p.id}" style="--accent:${p.cat.color}"
         data-buscar="${esc(norm([p.nombre, p.descripcion, p.cat.nombre, ...p.grupos.flatMap((g) => g.opciones.map((o) => o.nombre))].join(' ')))}">
+        ${sinF ? '' : `
         <div class="dish-photo">
           ${fotoO(p, 0, grande ? 'ph-lg' : '')}
           ${p.fotos.length > 1 ? `<span class="photo-count">📷 ${p.fotos.length}</span>` : ''}
           ${esCombo ? '<span class="badge-combo">🎁 Combo</span>' : ''}
           ${p.agotado ? '<span class="badge-agotado">Hoy no hay</span>' : ''}
-        </div>
+        </div>`}
         <div class="dish-body">
+          ${sinF ? badgesInline : ''}
           <h4 class="dish-name">${esc(p.nombre)}</h4>
           ${p.descripcion ? `<p class="dish-desc">${esc(p.descripcion)}</p>` : ''}
           ${chipsResumen(p)}
@@ -216,6 +222,7 @@
 
   function pintarMenu() {
     const { categorias, platillos } = MENU;
+    const sinF = sinFotosActivo();
 
     // portada
     const [primera, ...resto] = conComillas(nombreNegocio()).split(/\s+/);
@@ -226,11 +233,15 @@
     document.title = nombreNegocio().replace(/"/g, '') + ' · Menú';
 
     // galería interactiva en portada: prioriza destacados y alterna platillos
-    const ordenados = [...platillos.filter((p) => p.destacado), ...platillos.filter((p) => !p.destacado)];
-    const fotos = [];
-    const maxF = Math.max(0, ...ordenados.map((p) => p.fotos.length));
-    for (let i = 0; i < maxF; i++) ordenados.forEach((p) => { if (p.fotos[i]) fotos.push([p, i]); });
-    GALERIA = fotos;
+    if (sinF) {
+      GALERIA = [];
+    } else {
+      const ordenados = [...platillos.filter((p) => p.destacado), ...platillos.filter((p) => !p.destacado)];
+      const fotos = [];
+      const maxF = Math.max(0, ...ordenados.map((p) => p.fotos.length));
+      for (let i = 0; i < maxF; i++) ordenados.forEach((p) => { if (p.fotos[i]) fotos.push([p, i]); });
+      GALERIA = fotos;
+    }
     heroIndex = 0;
     pintarHeroFotos(true);
 
@@ -249,7 +260,7 @@
     $('#favoritos').hidden = !favs.length;
     $('#favs-lista').innerHTML = favs.map((p) => `
       <button type="button" class="fav" data-id="${p.id}" style="--accent:${p.cat.color}">
-        ${fotoO(p, 0, 'ph-lg')}
+        ${sinF ? '' : fotoO(p, 0, 'ph-lg')}
         <span class="sticker">⭐ Favorito</span>
         <span class="fav-info"><span class="fav-name">${esc(p.nombre)}</span><span class="fav-cta">${p.precio != null ? money(p.precio) + ' · ' : ''}Ármalo a tu gusto →</span></span>
       </button>`).join('');
@@ -384,19 +395,26 @@
 
   function pintarPlatillo() {
     const { p } = actual;
-    const n = p.fotos.length;
-    const fotos = n
-      ? p.fotos.map((f, i) => `<div class="slide" data-i="${i}"><img class="slide-bg" src="${esc(f)}" alt="" aria-hidden="true" draggable="false" loading="${i ? 'lazy' : 'eager'}"><img class="slide-img" src="${esc(f)}" alt="${esc(p.nombre)}" data-emoji="${p.cat.emoji}" draggable="false" loading="${i ? 'lazy' : 'eager'}"></div>`).join('')
-      : `<div class="slide">${relleno(p.cat.emoji, 'ph-lg')}</div>`;
+    const sinF = sinFotosActivo();
+    const n = sinF ? 0 : p.fotos.length;
     const media = $('#pl-media');
-    media.style.setProperty('--accent', p.cat.color);
-    media.innerHTML = `
-      <div class="pl-gal-track" id="pl-track">${fotos}</div>
-      ${n > 1 ? `
-        <button type="button" class="pl-nav pl-prev" data-ir="-1" aria-label="Foto anterior" disabled>‹</button>
-        <button type="button" class="pl-nav pl-next" data-ir="1" aria-label="Foto siguiente">›</button>
-        <div class="pl-dots">${p.fotos.map((_, i) => `<button type="button" data-foto="${i}" class="${i ? '' : 'is-on'}" aria-label="Foto ${i + 1} de ${n}"><i></i></button>`).join('')}</div>` : ''}
-      ${n ? '<button type="button" class="pl-zoom" data-zoom>⤢ Ver grande</button>' : ''}`;
+    $('#sheet-platillo').classList.toggle('sin-fotos', sinF);
+    media.hidden = sinF;
+    if (sinF) {
+      media.innerHTML = '';
+    } else {
+      const fotos = n
+        ? p.fotos.map((f, i) => `<div class="slide" data-i="${i}"><img class="slide-bg" src="${esc(f)}" alt="" aria-hidden="true" draggable="false" loading="${i ? 'lazy' : 'eager'}"><img class="slide-img" src="${esc(f)}" alt="${esc(p.nombre)}" data-emoji="${p.cat.emoji}" draggable="false" loading="${i ? 'lazy' : 'eager'}"></div>`).join('')
+        : `<div class="slide">${relleno(p.cat.emoji, 'ph-lg')}</div>`;
+      media.style.setProperty('--accent', p.cat.color);
+      media.innerHTML = `
+        <div class="pl-gal-track" id="pl-track">${fotos}</div>
+        ${n > 1 ? `
+          <button type="button" class="pl-nav pl-prev" data-ir="-1" aria-label="Foto anterior" disabled>‹</button>
+          <button type="button" class="pl-nav pl-next" data-ir="1" aria-label="Foto siguiente">›</button>
+          <div class="pl-dots">${p.fotos.map((_, i) => `<button type="button" data-foto="${i}" class="${i ? '' : 'is-on'}" aria-label="Foto ${i + 1} de ${n}"><i></i></button>`).join('')}</div>` : ''}
+        ${n ? '<button type="button" class="pl-zoom" data-zoom>⤢ Ver grande</button>' : ''}`;
+    }
     $('#pl-body').innerHTML = `
       <div class="pl-head">
         <h2 id="pl-nombre">${esc(p.nombre)}</h2>
@@ -1022,12 +1040,37 @@
   });
 
   // ---------- temas visuales demo ----------
+  let sinFotos = false;
+  function sinFotosActivo() {
+    return sinFotos;
+  }
+  function aplicarModoFotos(manual) {
+    if (typeof manual === 'boolean') {
+      sinFotos = manual;
+      store.set('sin-fotos', manual);
+    } else {
+      const guardado = store.get('sin-fotos', null);
+      if (typeof guardado === 'boolean') sinFotos = guardado;
+      else if (typeof CFG.sinFotos === 'boolean') sinFotos = CFG.sinFotos;
+      else if (AJ('sin_fotos', 'sin_foto')) sinFotos = esSi(AJ('sin_fotos', 'sin_foto'));
+      else if (AJ('fotos')) sinFotos = norm(AJ('fotos')) === 'no';
+      else sinFotos = MENU.platillos.length > 0 && !MENU.platillos.some((p) => p.fotos.length);
+    }
+    document.documentElement.toggleAttribute('data-sin-fotos', sinFotos);
+    document.body.toggleAttribute('data-sin-fotos', sinFotos);
+    const btn = $('#btn-sin-fotos');
+    if (btn) {
+      btn.classList.toggle('is-on', sinFotos);
+      btn.setAttribute('aria-pressed', String(sinFotos));
+    }
+  }
+
   function aplicarTema(t) {
     const tema = t || CFG.tema || AJ('tema') || store.get('tema', 'clasico');
     document.documentElement.setAttribute('data-tema', tema);
     document.body.setAttribute('data-tema', tema);
     store.set('tema', tema);
-    $$('.theme-chip').forEach((c) => c.classList.toggle('is-on', c.dataset.setTema === tema));
+    $$('.theme-chip[data-set-tema]').forEach((c) => c.classList.toggle('is-on', c.dataset.setTema === tema));
   }
 
   document.addEventListener('click', (e) => {
@@ -1035,6 +1078,16 @@
     if (!btn) return;
     aplicarTema(btn.dataset.setTema);
     toast(`Estilo aplicado: ${btn.textContent.trim()} ✨`);
+  });
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-toggle-fotos]');
+    if (!btn) return;
+    aplicarModoFotos(!sinFotosActivo());
+    pintarMenu();
+    const q = $('#buscar')?.value;
+    if (q) filtrar(q);
+    toast(sinFotosActivo() ? 'Modo sin fotos activado 📄' : 'Modo con fotos activado 📷');
   });
 
   function armarEnlaceVentas() {
@@ -1070,6 +1123,7 @@
     AJ = armarAjustes(datos.ajustes || []);
     MENU = armarMenu(datos.platillos || []);
     aplicarTema();
+    aplicarModoFotos();
     actualizarEnlaceVentas();
     pintarMenu();
   }
