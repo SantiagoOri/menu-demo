@@ -898,6 +898,10 @@
 
   let OPINIONES = [];
   const misOpiniones = () => store.get('mis-opiniones', []);
+  const urlMaps = () => {
+    const raw = (CFG.googleMaps || AJ('resenas_maps', 'opiniones_maps', 'mapa', 'maps') || '').trim();
+    return /^https?:\/\//i.test(raw) ? raw : '';
+  };
 
   function leerOpiniones(filas) {
     return filas.map((f) => ({
@@ -905,6 +909,7 @@
       nombre: campo(f, ['nombre'], 'contiene'),
       comentario: campo(f, ['comentario', 'opinion', 'mensaje'], 'contiene'),
       fecha: campo(f, ['marca_temporal', 'fecha', 'timestamp'], 'contiene').split(/\s+/)[0],
+      origen: campo(f, ['origen', 'fuente', 'plataforma'], 'contiene'),
       oculta: esSi(campo(f, ['ocultar'], 'contiene')),
     })).filter((o) => o.calif >= 1 && o.calif <= 5 && !o.oculta).reverse();
   }
@@ -916,23 +921,29 @@
     const propias = misOpiniones().filter((m) => !OPINIONES.some((o) => o.comentario === m.comentario && o.calif === m.calif));
     const todas = [...propias, ...OPINIONES];
     const res = $('#op-resumen');
+    const maps = urlMaps();
+    const mapsLink = maps ? `<a href="${esc(maps)}" target="_blank" rel="noopener" class="op-maps-link">📍 Ver en Google Maps ↗</a>` : '';
     if (!todas.length) {
-      res.innerHTML = '';
+      res.innerHTML = mapsLink;
       $('#op-lista').innerHTML = '<div class="op-vacio">Aún no hay opiniones.<br>¡Sé el primero en contarnos qué tal! ⭐</div>';
       return;
     }
     const prom = todas.reduce((s, o) => s + o.calif, 0) / todas.length;
     const cuenta = [5, 4, 3, 2, 1].map((n) => [n, todas.filter((o) => o.calif === n).length]);
     res.innerHTML = `
-      <div><div class="op-score">${prom.toFixed(1)}</div><div class="op-stars" aria-label="${prom.toFixed(1)} de 5">${estrellas(prom)}</div><div class="op-total">${todas.length} ${todas.length === 1 ? 'opinión' : 'opiniones'}</div></div>
+      <div><div class="op-score">${prom.toFixed(1)}</div><div class="op-stars" aria-label="${prom.toFixed(1)} de 5">${estrellas(prom)}</div><div class="op-total">${todas.length} ${todas.length === 1 ? 'opinión' : 'opiniones'}</div>${mapsLink}</div>
       <div class="op-bars">${cuenta.map(([n, c]) => `<div class="op-bar"><span>${n}</span><i><b style="width:${(c / todas.length) * 100}%"></b></i><span>${c}</span></div>`).join('')}</div>`;
     $('#op-lista').innerHTML = todas.slice(0, 40).map((o) => {
-      const nombre = o.nombre || 'Cliente';
+      const nombre = (o.nombre || '').trim() || 'Cliente';
+      const esMaps = /google|maps/i.test(o.origen || '');
+      const top = esMaps
+        ? `<div class="op-card-top"><div class="op-stars" aria-label="${o.calif} de 5">${estrellas(o.calif)}</div><span class="op-badge-maps">📍 Google Maps</span></div>`
+        : `<div class="op-stars" aria-label="${o.calif} de 5">${estrellas(o.calif)}</div>`;
       return `<article class="op-card">
-        <div class="op-stars" aria-label="${o.calif} de 5">${estrellas(o.calif)}</div>
+        ${top}
         ${o.comentario ? `<p>“${esc(o.comentario)}”</p>` : '<p></p>'}
         <div class="op-quien"><span class="op-avatar" style="background:${colorDe(nombre)}">${esc(nombre[0].toUpperCase())}</span>
-          <span>${esc(nombre)}<br><span class="op-fecha">${o.pendiente ? 'Enviada por ti' : esc(o.fecha)}</span></span></div>
+          <span>${esc(nombre)}<br><span class="op-fecha">${o.pendiente ? 'Enviada por ti' : esc(o.fecha || '')}</span></span></div>
       </article>`;
     }).join('');
   }
@@ -957,33 +968,56 @@
     const ultima = store.get('ultima-opinion', 0);
     if (Date.now() - ultima < 12 * 3600e3) { nota.textContent = 'Ya recibimos tu opinión de hoy, ¡gracias! 💛'; return; }
 
-    if (!FORM) {
-      const txt = `Hola, les dejo mi opinión del servicio:\n${'⭐'.repeat(calificacion)} (${calificacion}/5)\n${comentario}${nombre ? '\n— ' + nombre : ''}`;
-      window.open(waLink(txt), '_blank', 'noopener');
-      nota.textContent = '¡Gracias! Se abrió WhatsApp para enviar tu opinión.';
-      return;
-    }
+    const califEnviada = calificacion;
     const btn = $('button[type="submit"]', e.target);
-    btn.disabled = true;
-    nota.textContent = 'Enviando…';
-    try {
-      const body = new URLSearchParams();
-      body.append(FORM.calif, calificacion);
-      if (FORM.nombre) body.append(FORM.nombre, nombre);
-      if (FORM.comentario) body.append(FORM.comentario, comentario);
-      await fetch(FORM.action, { method: 'POST', mode: 'no-cors', body });
-      store.set('ultima-opinion', Date.now());
-      store.set('mis-opiniones', [{ calif: calificacion, nombre, comentario, pendiente: true }, ...misOpiniones()].slice(0, 5));
-      e.target.reset();
-      calificacion = 0;
-      $$('#stars-input [data-v]').forEach((s) => s.classList.remove('is-on'));
-      $('#stars-label').textContent = 'Toca las estrellas';
-      nota.textContent = '¡Gracias por tu opinión! 💛';
-      pintarOpiniones();
-    } catch {
-      nota.textContent = 'No se pudo enviar. Revisa tu internet e intenta otra vez.';
-    } finally {
-      btn.disabled = false;
+    if (FORM) {
+      btn.disabled = true;
+      nota.textContent = 'Enviando…';
+      try {
+        const body = new URLSearchParams();
+        body.append(FORM.calif, califEnviada);
+        if (FORM.nombre) body.append(FORM.nombre, nombre);
+        if (FORM.comentario) body.append(FORM.comentario, comentario);
+        await fetch(FORM.action, { method: 'POST', mode: 'no-cors', body });
+      } catch {
+        nota.textContent = 'No se pudo enviar. Revisa tu internet e intenta otra vez.';
+        btn.disabled = false;
+        return;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    store.set('ultima-opinion', Date.now());
+    store.set('mis-opiniones', [{ calif: califEnviada, nombre, comentario, pendiente: true, fecha: 'Hoy' }, ...misOpiniones()].slice(0, 5));
+    e.target.reset();
+    calificacion = 0;
+    $$('#stars-input [data-v]').forEach((s) => { s.classList.remove('is-on'); s.setAttribute('aria-checked', 'false'); });
+    $('#stars-label').textContent = 'Toca las estrellas';
+    pintarOpiniones();
+
+    const maps = urlMaps();
+    if (califEnviada >= 4) {
+      let copiado = false;
+      if (comentario && navigator.clipboard?.writeText) {
+        try { await navigator.clipboard.writeText(comentario); copiado = true; } catch { /* sin permiso de portapapeles */ }
+      }
+      if (maps) {
+        nota.innerHTML = `
+          <span class="op-cta-box">
+            <span class="op-cta-msg">¡Muchas gracias por tus ${califEnviada} estrellas! 💛${copiado ? '<br><small>📋 Copiamos tu comentario para que solo lo pegues en Maps.</small>' : ''}</span>
+            <a href="${esc(maps)}" target="_blank" rel="noopener" class="btn btn-yellow btn-sm op-maps-btn">⭐ Publicar también en Google Maps ↗</a>
+          </span>`;
+      } else {
+        nota.textContent = '¡Gracias por tu opinión! 💛';
+      }
+    } else {
+      const txt = `Hola, les dejo un comentario sobre mi experiencia (${califEnviada}/5 ⭐):\n${comentario || '(Sin comentario)'}${nombre ? '\n— ' + nombre : ''}`;
+      nota.innerHTML = `
+        <span class="op-cta-box op-cta-privado">
+          <span class="op-cta-msg">¡Gracias por decirnos! 🙏 Tu comentario fue registrado para mejorar nuestro servicio.</span>
+          <a href="${esc(waLink(txt))}" target="_blank" rel="noopener" class="btn btn-wa btn-sm op-maps-btn">💬 Hablar directo con el encargado</a>
+        </span>`;
     }
   });
 
@@ -1054,7 +1088,7 @@
       const ajustes = aj.status === 'fulfilled' && aj.value.some((f) => campo(f, ['valor'])) ? aj.value : (cache?.ajustes || RESPALDO.ajustes);
       if (!platillos) { console.warn('No se pudo leer la hoja de Google; se usa el menú guardado.', pl.reason || ''); return; }
       const nuevo = { platillos, ajustes };
-      if (JSON.stringify(nuevo) !== JSON.stringify(cache)) { store.set('menu-cache', nuevo); usar(nuevo); }
+      if (JSON.stringify(nuevo) !== JSON.stringify(cache)) { store.set('menu-cache', nuevo); usar(nuevo); pintarOpiniones(); }
     });
     leerPestana(TABS.opiniones).then((filas) => {
       OPINIONES = leerOpiniones(filas);

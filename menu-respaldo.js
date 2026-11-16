@@ -311,6 +311,7 @@ window.PAYO_RESPALDO = {
    "Nombre": "Mariana G.",
    "Comentario": "¡Los chilaquiles divorciados con pollo asado están buenísimos! Y súper práctico pedir desde el celular y pasar directo a recoger.",
    "Fecha": "Hace 2 días",
+   "Origen": "Google Maps",
    "Ocultar": ""
   },
   {
@@ -332,6 +333,7 @@ window.PAYO_RESPALDO = {
    "Nombre": "Jorge M.",
    "Comentario": "Los hot cakes muy esponjosos y bien servidos, excelente servicio por WhatsApp.",
    "Fecha": "Hace 1 semana",
+   "Origen": "Google Maps",
    "Ocultar": ""
   }
  ]
